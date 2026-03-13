@@ -235,5 +235,135 @@ q12 = (
     .drop_duplicates()
 )
 
+#import numpy as np
+
+
+# Q- Create a new column amount_flag in orders:
+
+# amount > 60000 → "Very High"
+
+# amount > 50000 → "High"
+
+# amount > 1000 → "Medium"
+
+# else → "Low"
+
+result = ["Very High", "High", "Medium"]
+
+condition = [
+    orders["amount"] > 60000,
+    orders["amount"] > 50000,
+    orders["amount"] > 1000
+]
+
+orders["amount_flag"] = np.select(
+    condition,
+    result,
+    default="Low"
+)
+
+
+
+# Q -> Create column city_flag
+
+# Rules:
+
+# city = Pune AND amount > 50000 → "VIP"
+
+# city = Delhi → "North"
+
+# else → "Normal"
+
+# Use orders + customers.
+
+
+df1 = pd.merge(
+    orders,
+    customers,
+    on="customer_id",
+    how="inner"
+)
+
+output = ["VIP", "North"]
+
+condition = [
+    (df1["city"] == "Pune") & (df1["amount"] > 50000),
+    df1["city"] == "Delhi"
+]
+
+df1["city_flag"] = np.select(
+    condition,
+    output,
+    default="Normal"
+)
+
+
+
+# Q- Create dataframe that contains all customer_id from:
+
+# orders
+
+# customers
+
+# No duplicates.
+
+result = pd.concat([
+    orders["customer_id"],
+    customers["customer_id"]
+]).drop_duplicates().reset_index(drop=True)
+
+
+
+# Q- Stack orders with itself (like UNION ALL).
+
+result = pd.concat([
+    orders,
+    orders,
+],
+ignore_index=True)
+
+
+
+# Q-> Find orders where current amount > average of previous 2 orders per customer.
+
+orders = orders.sort_values(["customer_id", "date"])
+
+orders["pre_average"] = (
+    orders
+    .groupby("customer_id")["amount"]
+    .shift(1)
+    .rolling(2)
+    .mean()
+    .reset_index(level=0, drop=True)
+)
+
+orders[
+    orders["amount"] > orders["pre_average"]
+]
+
+
+
+# Q-> Find orders where 3-order moving average is increasing compared to previous moving average.
+
+orders = orders.sort_values(["customer_id", "date"])
+
+orders["mov_avg3"] = (
+    orders
+    .groupby("customer_id")["amount"]
+    .rolling(3)
+    .mean()
+    .reset_index(level=0, drop=True)
+)
+
+orders["prev_mov_avg3"] = (
+    orders
+    .groupby("customer_id")["mov_avg3"]
+    .shift(1)
+)
+
+orders[
+    orders["mov_avg3"] > orders["prev_mov_avg3"]
+]
+
 
 print("All queries executed")
