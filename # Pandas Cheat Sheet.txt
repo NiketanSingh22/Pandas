@@ -1,0 +1,196 @@
+# Pandas Cheat Sheet
+
+Common Pandas operations for quick revision.
+
+---
+
+## 1. Filtering (WHERE)
+
+df[df["price"] > 100]
+
+df[(df["city"] == "Pune") & (df["amount"] > 500)]
+
+df[df["city"].isin(["Pune", "Delhi"])]
+
+df[df["date"].between("2024-01-01", "2024-01-10")]
+
+Rules
+
+== not =
+& = AND
+| = OR
+() required
+
+---
+
+## 2. New Column
+
+df["total"] = df["price"] * df["qty"]
+
+CASE WHEN
+
+df["size"] = np.where(df["amount"] > 50000, "High", "Low")
+
+Multiple condition
+
+df["type"] = np.select(
+    [df["amount"] > 50000, df["amount"] > 1000],
+    ["High", "Medium"],
+    default="Low"
+)
+
+---
+
+## 3. Sorting
+
+df.sort_values("amount")
+
+df.sort_values("amount", ascending=False)
+
+df.sort_values(
+    ["city", "amount"],
+    ascending=[True, False]
+)
+
+---
+
+## 4. GroupBy
+
+df.groupby("customer")["amount"].sum()
+
+df.groupby("city")["qty"].sum()
+
+df.groupby(["city","category"])["amount"].sum()
+
+Multiple agg
+
+df.groupby("city").agg({
+    "amount": "sum",
+    "qty": "mean"
+})
+
+---
+
+## 5. HAVING
+
+x = df.groupby("customer")["amount"].sum()
+
+x[x > 10000]
+
+or
+
+df.groupby("customer")["amount"].sum()[lambda x: x > 10000]
+
+Rule
+
+groupby → agg → filter
+
+---
+
+## 6. Top N
+
+df.groupby("customer")["amount"] \
+  .sum() \
+  .sort_values(ascending=False) \
+  .head(3)
+
+No LIMIT in pandas
+
+---
+
+## 7. Join
+
+pd.merge(a, b, on="id", how="inner")
+
+pd.merge(a, b, on="id", how="left")
+
+pd.merge(a, b, on="id", how="right")
+
+pd.merge(a, b, on="id", how="outer")
+
+Different key
+
+pd.merge(
+    a,
+    b,
+    left_on="id1",
+    right_on="id2"
+)
+
+---
+
+## 8. Relationship Type
+
+1-1 safe  
+N-1 safe  
+1-N duplicates  
+N-N dangerous  
+
+Always check before join
+
+---
+
+## 9. Duplication Problem
+
+orders → payments = one to many
+
+Wrong
+
+sum after join
+
+Correct
+
+sum from orders
+
+or
+
+drop_duplicates("order_id")
+
+---
+
+## 10. Missing Rows After Join
+
+df = pd.merge(
+    orders,
+    payments,
+    on="order_id",
+    how="left"
+)
+
+df[df["payment_mode"].isna()]
+
+Rule
+
+LEFT JOIN + isna()
+
+---
+
+## 11. Distinct Count
+
+df.groupby("customer")["payment_mode"].nunique()
+
+---
+
+## 12. Check duplicates
+
+df["id"].duplicated().sum()
+
+df.groupby("id").size()
+
+Always check before join
+
+---
+
+## 13. Useful
+
+df.head()
+
+df.tail()
+
+df.columns
+
+df.shape
+
+df.info()
+
+df.describe()
